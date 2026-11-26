@@ -166,10 +166,12 @@ main.pub{padding-bottom:140px}
 .step button:disabled{opacity:.3;cursor:default}
 .notice.ok{background:var(--good-soft);color:var(--good)}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
-input[type=tel],input[type=search]{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--border);font-size:16px;background:var(--panel);color:var(--text);margin-bottom:12px}
+textarea{font-family:inherit;resize:vertical;display:block}
+input[type=tel],input[type=search],textarea{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--border);font-size:16px;background:var(--panel);color:var(--text);margin-bottom:12px}
 .resbar{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;border:var(--card-border);background:var(--panel);box-shadow:var(--shadow);border-radius:16px;padding:12px 14px;margin-bottom:12px;cursor:pointer;text-align:left}
 .resbar b{font-weight:700}
 .resv{margin-bottom:10px}
 .resv.recollida,.resv.anullada{opacity:.55}
 .resv a{color:inherit}
+.resv .comentari{padding:2px 0 8px;font-size:14px;color:var(--muted);font-style:italic;overflow-wrap:anywhere}
 .resbar svg{width:16px;height:16px;flex:none;fill:none;stroke:var(--muted);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transform:rotate(-90deg)}

@@ -121,25 +121,26 @@ function tanca() { $('#overlay').innerHTML = ''; }
 
 function formulari() {
   if (!R.codi) R.codi = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
-  const nom = $('#rn') ? $('#rn').value : '', tel = $('#rt') ? $('#rt').value : '';
+  const nom = $('#rn') ? $('#rn').value : '', tel = $('#rt') ? $('#rt').value : '', com = $('#rc') ? $('#rc').value : '';
   sheet(`<h2>La teva reserva</h2>
     <div class="panel" style="margin-bottom:14px">${alfa(triats()).map(p => `<div class="r"><span>${R.triat[p.id]}× ${esc(p.nom)}</span><span class="v num">${eur(p.preu * R.triat[p.id])}</span></div>`).join('')}
       <div class="r tot"><span>Total a pagar en recollir-ho</span><span class="v num">${eur(total())}</span></div></div>
     <form onsubmit="envia(event)">
       <label class="micro" for="rn">Nom i cognom</label><input type="text" id="rn" autocomplete="name" maxlength="60" value="${esc(nom)}">
       <label class="micro" for="rt">Telèfon</label><input type="tel" id="rt" autocomplete="tel" inputmode="tel" placeholder="p. ex. 612 345 678" value="${esc(tel)}">
+      <label class="micro" for="rc">Comentari <span style="text-transform:none;letter-spacing:0">(opcional)</span></label><textarea id="rc" rows="2" maxlength="200" placeholder="p. ex. passaré a recollir-ho cap a les 6">${esc(com)}</textarea>
       <div class="hp" aria-hidden="true"><label for="rw">Web</label><input type="text" id="rw" tabindex="-1" autocomplete="off"></div>
       <div class="err" id="rerr"></div>
       <div class="row"><button type="button" class="btn sec" onclick="tanca()">Enrere</button><button class="btn pri" id="rok">Confirmar la reserva</button></div>
     </form>
-    <p class="foot-note">Només fem servir el nom i el telèfon per trobar la teva reserva a la parada o trucar-te si cal. Els esborrem després de la paradeta.</p>`);
+    <p class="foot-note">Només fem servir el nom, el telèfon i el comentari per trobar la teva reserva a la parada o trucar-te si cal. Els esborrem després de la paradeta.</p>`);
   if (!nom) $('#rn').focus();
 }
 
 async function envia(e) {
   e.preventDefault();
   if (R.enviant) return;
-  const nom = $('#rn').value.trim(), telefon = $('#rt').value.trim();
+  const nom = $('#rn').value.trim(), telefon = $('#rt').value.trim(), comentari = $('#rc').value.trim();
   if (nom.length < 2) { $('#rerr').textContent = 'Posa el teu nom.'; return; }
   if (telefon.replace(/\D/g, '').length < 9) { $('#rerr').textContent = 'El telèfon no és correcte.'; return; }
   const P = par(), linies = triats().map(p => ({ producte: p.id, quantitat: R.triat[p.id] }));
@@ -148,14 +149,14 @@ async function envia(e) {
   $('#rok').disabled = true;
   $('#rerr').textContent = 'Enviant…';
   try {
-    const r = await crida({ accio: 'reserva', paradeta: P.nom, nom, telefon, linies, codi: R.codi, web: $('#rw').value });
+    const r = await crida({ accio: 'reserva', paradeta: P.nom, nom, telefon, comentari, linies, codi: R.codi, web: $('#rw').value });
     if (!r.ok) {
       $('#rerr').textContent = r.error;
       carrega(true).then(() => { if ($('#rn')) formulari(); });
       return;
     }
     desaMeva({ paradeta: P.nom, numero: r.numero, ts: new Date().toISOString() });
-    R.resultat = { numero: r.numero, paradeta: P.nom, data: P.data, nom, linies: resum, total: resum.reduce((s, l) => s + l.preu * l.quantitat, 0) };
+    R.resultat = { numero: r.numero, paradeta: P.nom, data: P.data, nom, comentari, linies: resum, total: resum.reduce((s, l) => s + l.preu * l.quantitat, 0) };
     R.triat = {}; R.codi = null;
     tanca(); pinta(); scrollTo(0, 0);
     carrega(true);
@@ -174,6 +175,7 @@ function vResultat() {
     <div class="label">Has reservat</div>
     <div class="panel">${x.linies.map(l => `<div class="r"><span>${l.quantitat}× ${esc(l.nom)}</span><span class="v num">${eur(l.quantitat * l.preu)}</span></div>`).join('')}
       <div class="r tot"><span>A pagar en recollir-ho</span><span class="v num">${eur(x.total)}</span></div></div>
+    ${x.comentari ? `<div class="label">El teu comentari</div><div class="panel"><div class="r"><span>${esc(x.comentari)}</span></div></div>` : ''}
     <p class="foot-note">Fes una captura de pantalla d'aquesta pàgina per tenir el número a mà.</p>
     <div class="btns"><button class="btn sec" onclick="R.resultat=null;pinta()">Fer una altra reserva</button></div>`;
 }

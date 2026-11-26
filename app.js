@@ -715,6 +715,7 @@ function pintaLlistaRes() {
   const chip = { pendent: '<span class="chip amber">Per recollir</span>', recollida: '<span class="chip green">Recollida</span>', anullada: '<span class="chip grey">Anul·lada</span>' };
   el.innerHTML = llista.length ? llista.map(r => `<div class="panel resv ${r.estat}">
       <div class="r"><span><b>${r.num} · ${esc(r.nom)}</b><br><a class="muted num" href="tel:${esc(r.telefon.replace(/[^\d+]/g, ''))}">${esc(r.telefon)}</a></span>${chip[r.estat]}</div>
+      ${r.comentari ? `<div class="comentari">«${esc(r.comentari)}»</div>` : ''}
       ${r.linies.map(l => `<div class="r"><span>${l.quantitat}× ${esc(l.nom)}</span><span class="v num">${eur(l.quantitat * l.preu)}</span></div>`).join('')}
       <div class="r tot"><span>Total</span><span class="v num">${eur(suma(r.linies.map(l => l.quantitat * l.preu)))}</span></div>
       ${r.estat === 'pendent' ? `<div class="btns">${M.d.admin ? `<button class="btn sec danger" data-ref="${esc(r.ref)}" onclick="anullaReserva(this.dataset.ref)">Anul·lar</button>` : ''}<button class="btn pri" data-ref="${esc(r.ref)}" onclick="recull(this.dataset.ref)">Recollir i cobrar</button></div>` : ''}
@@ -832,9 +833,9 @@ function descarrega() {
   liquidacions(M).forEach(l => files.push([l.nom, n(l.pagar) + (l.faltenCost ? ' (falten costos)' : ''), l.retorna ? l.tornar : '']));
   if (M.reserves.length) {
     const estat = { pendent: 'Per recollir', recollida: 'Recollida', anullada: 'Anul·lada' };
-    files.push([], ['Reserves', 'Nom', 'Telèfon', 'Productes', 'Import', 'Estat']);
+    files.push([], ['Reserves', 'Nom', 'Telèfon', 'Productes', 'Import', 'Estat', 'Comentari']);
     M.reserves.forEach(r => files.push([r.num, r.nom, r.telefon, r.linies.map(l => `${l.quantitat}× ${l.nom}`).join(', '),
-      n(suma(r.linies.map(l => l.quantitat * l.preu))), estat[r.estat]]));
+      n(suma(r.linies.map(l => l.quantitat * l.preu))), estat[r.estat], r.comentari || '']));
   }
   const cel = x => { const s = String(x == null ? '' : x); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   const csv = '﻿' + files.map(f => f.map(cel).join(';')).join('\r\n');

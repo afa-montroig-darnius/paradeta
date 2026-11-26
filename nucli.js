@@ -27,7 +27,7 @@ var Nucli = (function () {
     'Productes': ['Id', 'Paradeta', 'Nom', 'Categoria', 'Proveïdor', 'Preu venda', 'Preu cost', 'Quantitat inicial', 'Amagat'],
     'Moviments': ['Operació', 'Paradeta', 'Data i hora', 'Tipus', 'Id producte', 'Producte', 'Quantitat', 'Preu', 'Import', 'Referència', 'Dispositiu'],
     // Les reserves que es fan des del web: una fila per producte. «Codi» evita que un reenviament la dupliqui.
-    'Reserves': ['Número', 'Paradeta', 'Data i hora', 'Nom', 'Telèfon', 'Id producte', 'Producte', 'Quantitat', 'Preu', 'Codi']
+    'Reserves': ['Número', 'Paradeta', 'Data i hora', 'Nom', 'Telèfon', 'Id producte', 'Producte', 'Quantitat', 'Preu', 'Codi', 'Comentari']
   };
 
   // Codi intern → nom que es veu al full
@@ -188,7 +188,7 @@ var Nucli = (function () {
       var n = Math.round(num(f[0]) || 0);
       if (!n) return;
       var r = per[n];
-      if (!r) { r = per[n] = { num: n, ref: 'R' + n, ts: iso(f[2]), nom: txt(f[3]), telefon: txt(f[4]), linies: [] }; out.push(r); }
+      if (!r) { r = per[n] = { num: n, ref: 'R' + n, ts: iso(f[2]), nom: txt(f[3]), telefon: txt(f[4]), comentari: txt(f[10]), linies: [] }; out.push(r); }
       r.linies.push({ producte: txt(f[5]), nom: txt(f[6]), quantitat: Math.round(num(f[7]) || 0), preu: cents(f[8]) || 0 });
     });
     return out;
@@ -394,6 +394,8 @@ var Nucli = (function () {
     if (nom.length < 2) return { ok: false, error: 'Posa el teu nom.' };
     var tel = telefonNet(p.telefon);
     if (!tel) return { ok: false, error: 'El telèfon no és correcte.' };
+    // Comentari opcional (p. ex. «passaré cap a les 6»): en una sola línia i curt
+    var comentari = txt(p.comentari).replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
     // Com a molt 3 reserves per recollir amb el mateix telèfon (comparant els 9 últims números)
     var nou = tel.replace(/\D/g, '').slice(-9), movs = movimentsDe(m, par);
     var mateix = estatReserves(reservesDe(m, par), movs).filter(function (r) {
@@ -423,7 +425,7 @@ var Nucli = (function () {
     m.llegir(FULLS.reserves).forEach(function (f) { if (txt(f[1]) === par) numero = Math.max(numero, Math.round(num(f[0]) || 0) + 1); });
     var ara = new Date();
     m.afegir(FULLS.reserves, ids.map(function (id) {
-      return [numero, par, ara, nom, tel, id, per[id].nom, q[id], euros(per[id].preu), codi];
+      return [numero, par, ara, nom, tel, id, per[id].nom, q[id], euros(per[id].preu), codi, comentari];
     }));
     return { ok: true, numero: numero, total: total };
   }
