@@ -50,7 +50,7 @@ const total = () => triats().reduce((s, p) => s + p.preu * R.triat[p.id], 0);
 const unitats = () => triats().reduce((s, p) => s + R.triat[p.id], 0);
 
 function pinta() {
-  let h = `<div class="app"><header><div class="hrow"><img class="logo" src="logo.jpg" alt="AFA Escola Mont-roig-Darnius"></div></header><main class="pub">`;
+  let h = `<div class="app"><header><div class="hrow"><img class="logo" src="logo.png" alt="AFA Escola Mont-roig-Darnius"></div></header><main class="pub">`;
   if (DEMO) h = '<div class="demo">Mode demo: les reserves es guarden només en aquest navegador.</div>' + h;
   h += `<h2 class="ptitle">Reserves</h2>`;
   if (R.resultat) h += vResultat();

@@ -232,7 +232,7 @@ function render() {
     arrel.innerHTML = `${DEMO ? '<div class="demo">Mode demo: les dades només es guarden en aquest mòbil.</div>' : ''}
       <div class="app">
         <header>
-          <div class="hrow"><img class="logo" src="logo.jpg" alt="AFA Escola Mont-roig-Darnius"><button class="sync" id="sync" onclick="tocaEstat()"></button></div>
+          <div class="hrow"><img class="logo" src="logo.png" alt="AFA Escola Mont-roig-Darnius"><button class="sync" id="sync" onclick="tocaEstat()"></button></div>
           <div class="evtwrap"><button class="evt" id="evt" onclick="triaParadeta()"></button></div>
         </header>
         <main id="main"></main>
@@ -293,7 +293,7 @@ function vSenseDades() {
 
 // ---------- Entrar ----------
 function vLogin() {
-  return `<div class="login"><img class="logo" src="logo.jpg" alt="AFA Escola Mont-roig-Darnius">
+  return `<div class="login"><img class="logo" src="logo.png" alt="AFA Escola Mont-roig-Darnius">
     <h1>Paradeta AFA</h1><p class="muted">Escriu la contrasenya de la paradeta.</p>
     <form onsubmit="entra(event)">
       <input type="password" id="pw" autocomplete="current-password" placeholder="Contrasenya">

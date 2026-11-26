@@ -1,5 +1,5 @@
 /* Paradeta AFA
-   Colors del logo de l'AFA: crema #F5EEDE, préssec #DCC2A9, rosa #DFA2B4, sàlvia #B1BFB0, text carbó.
+   Colors del logo de l'AFA (logo.png): préssec #C7AD9C, rosa #C59195, sàlvia #ADB9AE; fons crema #F5EEDE, text carbó.
    Estructura de la Intranet («App de consum»): targetes blanques amb ombra suau, radis grans,
    títols Manrope, botó principal negre càlid en píndola, bloc heroi rosa fosc. */
 :root{
@@ -11,7 +11,7 @@
   --red:#B3241B;--red-soft:rgba(214,41,31,.10);--amber:#8A5300;--amber-soft:rgba(217,119,6,.12);
   --radius:22px;--tile-radius:20px;--btn-radius:999px;
   --shadow:0 1px 2px rgba(26,23,19,.04),0 8px 24px rgba(26,23,19,.06);--card-border:0;
-  --title-font:Manrope,Inter,system-ui,sans-serif;--logo-blend:multiply;
+  --title-font:Manrope,Inter,system-ui,sans-serif;
   --cat-0:#5E7F69;--cat-1:#A9714B;--cat-2:#A8566F;--cat-3:#5F7391;
   color-scheme:light;
 }
@@ -20,7 +20,7 @@
   --accent:#E8AFC0;--on-accent:#2A1019;--accent-soft:rgba(223,162,180,.16);--seg:#2A2520;--good:#7FD19B;--good-soft:rgba(127,209,155,.14);
   --hero:#5E3141;--hero-border:#6E3B4D;--pri-bg:#F4EFE6;--pri-fg:#1E1C1A;
   --red:#F08A80;--red-soft:rgba(240,138,128,.14);--amber:#E9B36A;--amber-soft:rgba(233,179,106,.14);
-  --shadow:none;--card-border:1px solid var(--border);--logo-blend:normal;
+  --shadow:none;--card-border:1px solid var(--border);
   color-scheme:dark;
 }}
 *{box-sizing:border-box;margin:0}
@@ -32,7 +32,9 @@ button,input,select{font-family:inherit;color:inherit;font-size:inherit}
 
 header{position:sticky;top:0;z-index:5;background:var(--page);padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px}
 .hrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.logo{height:54px;width:auto;mix-blend-mode:var(--logo-blend);border-radius:8px;display:block}
+.logo{height:54px;width:auto;border-radius:10px;display:block}
+/* El logo té el fons transparent i la lletra fosca: amb el mòbil en mode fosc, li posem un fons crema */
+@media (prefers-color-scheme:dark){.logo{background:#F5EEDE;padding:5px 8px}}
 .micro{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
 .evtwrap{margin-top:8px}
 .evt{border:var(--card-border);background:var(--panel);box-shadow:var(--shadow);border-radius:999px;padding:6px 10px 6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
