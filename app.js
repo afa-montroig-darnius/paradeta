@@ -679,6 +679,7 @@ async function provaAdmin() {
   $('#aerr').textContent = 'Comprovant…';
   try {
     const r = await crida({ accio: 'hola', clau: v });
+    if (!r.ok && r.error !== 'contrasenya') { $('#aerr').textContent = r.error; return; }
     if (!r.ok || !r.admin) { $('#aerr').textContent = 'No és la contrasenya d\'administració'; return; }
     S.admin = v; LS.set('admin', v);
     tanca(); sincronitza();

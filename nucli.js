@@ -77,9 +77,10 @@ var Nucli = (function () {
       if (k.indexOf('venda') >= 0) c.venda = txt(r[1]);
       else if (k.indexOf('administr') >= 0) c.admin = txt(r[1]);
     });
-    // Les contrasenyes massa curtes no valen: és com si no n'hi hagués
-    if (c.venda.length < MIN_CLAU) c.venda = '';
-    if (c.admin.length < MIN_CLAU) c.admin = '';
+    // Les contrasenyes massa curtes no valen: és com si no n'hi hagués (però se n'avisa)
+    c.curtes = [];
+    if (c.venda && c.venda.length < MIN_CLAU) { c.curtes.push('de venda'); c.venda = ''; }
+    if (c.admin && c.admin.length < MIN_CLAU) { c.curtes.push('d\'administració'); c.admin = ''; }
     return c;
   }
 
@@ -436,6 +437,7 @@ var Nucli = (function () {
       var c = config(m);
       if (!c.venda && !c.admin) return { ok: false, error: 'Falten les contrasenyes: posa-les a la pestanya Configuració del full (com a mínim ' + MIN_CLAU + ' caràcters).' };
       var r = rol(p.clau, c);
+      if (!r && c.curtes.length) return { ok: false, error: 'La contrasenya ' + c.curtes.join(' i la ') + ' del full té menys de ' + MIN_CLAU + ' caràcters i no val: allarga-la a la pestanya Configuració.' };
       if (!r) return { ok: false, error: 'contrasenya' };
       if (p.accio === 'hola') return { ok: true, admin: r === 'admin', paradetes: paradetes(m) };
       if (p.accio === 'dades') return m.bloqueja(function () { return dades(p, m, r); });
