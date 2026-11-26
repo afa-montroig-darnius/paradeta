@@ -45,6 +45,10 @@ var Nucli = (function () {
   Object.keys(TIPUS).forEach(function (k) { CODI[TIPUS[k]] = k; });
 
   function txt(v) { return v == null ? '' : String(v).trim(); }
+  // Ids d'operacions, productes, referències i dispositius: només lletres, xifres, «-» i «_».
+  // Així no poden portar codi ni fórmules quan l'app o el full els fan servir.
+  function idOk(v) { return /^[A-Za-z0-9_-]{1,40}$/.test(v); }
+  var MIN_CLAU = 8;
   function esData(v) { return Object.prototype.toString.call(v) === '[object Date]'; }
   function num(v) {
     if (typeof v === 'number') return isNaN(v) ? null : v;
@@ -73,6 +77,9 @@ var Nucli = (function () {
       if (k.indexOf('venda') >= 0) c.venda = txt(r[1]);
       else if (k.indexOf('administr') >= 0) c.admin = txt(r[1]);
     });
+    // Les contrasenyes massa curtes no valen: és com si no n'hi hagués
+    if (c.venda.length < MIN_CLAU) c.venda = '';
+    if (c.admin.length < MIN_CLAU) c.admin = '';
     return c;
   }
 
@@ -103,6 +110,9 @@ var Nucli = (function () {
   function filesDeOperacio(op) {
     var t = TIPUS[op.tipus];
     if (!t) throw new Error('Tipus desconegut: ' + op.tipus);
+    if (op.ref && !idOk(txt(op.ref))) throw new Error('Referència no vàlida');
+    if (op.dispositiu && !idOk(txt(op.dispositiu))) throw new Error('Dispositiu no vàlid');
+    (op.linies || []).forEach(function (l) { if (!l || (l.producte && !idOk(txt(l.producte)))) throw new Error('Producte no vàlid'); });
     var d = new Date(op.ts || Date.now());
     function fila(prod, nom, q, preu, imp) {
       return [op.id, op.paradeta, d, t, prod || '', nom || '',
@@ -137,7 +147,7 @@ var Nucli = (function () {
     m.llegir(FULLS.productes).forEach(function (f, i) {
       if (txt(f[1]) !== nom || !txt(f[2])) return;
       var id = txt(f[0]);
-      if (!id) { // productes enganxats a mà, sense id: se'ls en posa un
+      if (!idOk(id)) { // productes enganxats a mà, sense id o amb un id estrany: se'ls en posa un
         id = 'P' + m.uuid().slice(0, 8);
         m.escriure(FULLS.productes, i, 0, id);
       }
@@ -231,9 +241,11 @@ var Nucli = (function () {
     ops.forEach(function (op) {
       try {
         if (!op || !txt(op.id)) throw new Error('Operació sense id');
+        if (!idOk(txt(op.id))) throw new Error('Id d\'operació no vàlid');
         if (op.tipus === 'producte') {
           var pr = op.producte || {};
           if (!txt(pr.id) || !txt(pr.nom)) throw new Error('Producte sense id o sense nom');
+          if (!idOk(txt(pr.id))) throw new Error('Id de producte no vàlid');
           if (!prodIds[pr.id]) {
             prodIds[pr.id] = 1;
             nousProd.push([pr.id, op.paradeta, txt(pr.nom), txt(pr.categoria), txt(pr.proveidor),
@@ -360,7 +372,8 @@ var Nucli = (function () {
     if (txt(p.web)) return { ok: true, numero: 0 }; // camp parany: només l'omplen els robots
     var par = txt(p.paradeta), x = paradetes(m).filter(function (y) { return y.nom === par; })[0];
     if (!x || !x.reserves) return { ok: false, error: 'Ara no es pot reservar en aquesta paradeta.' };
-    var codi = txt(p.codi).slice(0, 40);
+    var codi = txt(p.codi);
+    if (codi && !/^[a-z0-9]{8,40}$/.test(codi)) return { ok: false, error: 'Petició no vàlida. Torna a carregar la pàgina.' };
     if (codi) {
       var ja = m.llegir(FULLS.reserves).filter(function (f) { return txt(f[9]) === codi; })[0];
       if (ja) return { ok: true, numero: Math.round(num(ja[0])), repetida: true };
@@ -369,6 +382,12 @@ var Nucli = (function () {
     if (nom.length < 2) return { ok: false, error: 'Posa el teu nom.' };
     var tel = telefonNet(p.telefon);
     if (!tel) return { ok: false, error: 'El telèfon no és correcte.' };
+    // Com a molt 3 reserves per recollir amb el mateix telèfon (comparant els 9 últims números)
+    var nou = tel.replace(/\D/g, '').slice(-9), movs = movimentsDe(m, par);
+    var mateix = estatReserves(reservesDe(m, par), movs).filter(function (r) {
+      return r.estat === 'pendent' && r.telefon.replace(/\D/g, '').slice(-9) === nou;
+    }).length;
+    if (mateix >= 3) return { ok: false, error: 'Amb aquest telèfon ja hi ha 3 reserves per recollir. Per fer-ne més, parla amb l\'AFA.' };
     var q = {};
     (p.linies || []).forEach(function (l) {
       var n = Math.round(num(l && l.quantitat) || 0);
@@ -378,7 +397,7 @@ var Nucli = (function () {
     if (!ids.length) return { ok: false, error: 'No has triat res.' };
     var prods = productesDe(m, par, false).filter(function (pr) { return !pr.amagat; }), per = {}, total = 0, unitats = 0;
     prods.forEach(function (pr) { per[pr.id] = pr; });
-    var ex = existencies(prods, movimentsDe(m, par), reservesDe(m, par));
+    var ex = existencies(prods, movs, reservesDe(m, par));
     for (var i = 0; i < ids.length; i++) {
       var pr = per[ids[i]];
       if (!pr) return { ok: false, error: 'Un dels productes ja no es pot reservar. Torna a carregar la pàgina.' };
@@ -414,7 +433,9 @@ var Nucli = (function () {
       // Les úniques accions sense contrasenya: veure què es pot reservar i fer una reserva
       if (p.accio === 'publica') return m.bloqueja(function () { return publica(m); });
       if (p.accio === 'reserva') return m.bloqueja(function () { return reserva(p, m); });
-      var r = rol(p.clau, config(m));
+      var c = config(m);
+      if (!c.venda && !c.admin) return { ok: false, error: 'Falten les contrasenyes: posa-les a la pestanya Configuració del full (com a mínim ' + MIN_CLAU + ' caràcters).' };
+      var r = rol(p.clau, c);
       if (!r) return { ok: false, error: 'contrasenya' };
       if (p.accio === 'hola') return { ok: true, admin: r === 'admin', paradetes: paradetes(m) };
       if (p.accio === 'dades') return m.bloqueja(function () { return dades(p, m, r); });
@@ -439,7 +460,8 @@ var Nucli = (function () {
   // El que posa «Preparar el full» la primera vegada
   function dadesInicials() {
     return {
-      'Configuració': [['Contrasenya venda', 'paradeta'], ['Contrasenya administració', 'canvia-la']],
+      // Sense contrasenyes per defecte: fins que no s'hi posen, l'app no deixa entrar
+      'Configuració': [['Contrasenya venda', ''], ['Contrasenya administració', '']],
       'Paradetes': [['Nadal 2026', '', 'Alan', '']],
       'Proveïdors': [['Proveïdor de plantes', '', 'Sí'], ['Llibreria', '', 'Sí']],
       'Productes': PLANTES_NADAL.map(function (x) {

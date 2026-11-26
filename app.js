@@ -300,7 +300,7 @@ function vLogin() {
       <div class="err" id="err"></div>
       <button class="btn pri full">Entrar</button>
     </form>
-    ${DEMO ? '<p class="foot-note">Mode demo: la contrasenya és «paradeta», o «admin» per a l\'administració.</p>' : ''}</div>`;
+    ${DEMO ? '<p class="foot-note">Mode demo: la contrasenya és «paradeta», o «administracio» per a l\'administració.</p>' : ''}</div>`;
 }
 async function entra(e) {
   e.preventDefault();

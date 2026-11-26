@@ -10,6 +10,7 @@
         // les dates es guarden com a text: tornen a ser dates
         (d['Moviments'] || []).forEach(function (f) { f[2] = new Date(f[2]); });
         (d['Reserves'] || []).forEach(function (f) { f[2] = new Date(f[2]); });
+        d['Configuració'] = inicials()['Configuració'];
         return d;
       }
     } catch (e) {}
@@ -17,7 +18,7 @@
   }
   function inicials() {
     var d = Nucli.dadesInicials();
-    d['Configuració'] = [['Contrasenya venda', 'paradeta'], ['Contrasenya administració', 'admin']];
+    d['Configuració'] = [['Contrasenya venda', 'paradeta'], ['Contrasenya administració', 'administracio']];
     d['Proveïdors'] = [['Proveïdor de plantes', 45, 'Sí'], ['Llibreria', 30, 'Sí']];
     d['Paradetes'][0][3] = 'Sí'; // a la demo, les reserves pel web ja estan obertes
     var quantitats = { 'Avet gran': 4, 'Ardisia': 4, 'Antúrium': 5, 'Pensament': 40, 'Vesc de la sort': 20, 'Flor de Nadal petita': 15 };
