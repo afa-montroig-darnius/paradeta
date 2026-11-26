@@ -77,9 +77,10 @@ async function sincronitza() {
   if (S.cua.length) { S.xarxa = 'enviant'; pintaEstat(); }
   let mesCua = false;
   try {
+    let d = null;
     if (S.cua.length) {
       const lot = S.cua.slice(0, 40);
-      const r = await crida({ accio: 'enviar', operacions: lot });
+      const r = await crida({ accio: 'enviar', operacions: lot, paradeta: S.paradeta, ambDades: true });
       if (!r.ok) throw r;
       // les rebudes i les que el full ha rebutjat per mal fetes surten de la cua
       const fora = new Set(r.rebudes.concat((r.errors || []).map(e => e.id)));
@@ -87,8 +88,9 @@ async function sincronitza() {
       LS.set('cua', S.cua);
       if (r.errors && r.errors.length) console.warn('Operacions rebutjades pel full', r.errors);
       mesCua = S.cua.length > 0;
+      d = r.dades || null;
     }
-    const d = await crida({ accio: 'dades', paradeta: S.paradeta });
+    if (!d) d = await crida({ accio: 'dades', paradeta: S.paradeta });
     if (!d.ok) throw d;
     S.dades = d;
     S.llista = d.paradetes;

@@ -143,12 +143,23 @@ var Nucli = (function () {
   }
 
   // Productes d'una paradeta. Als que s'han enganxat a mà sense id se'ls en posa un.
-  function productesDe(m, nom, admin) {
+  // Les lectures van sense bloqueig (el bloqueig de Google és lent). Si en llegir cal escriure alguna cosa
+  // (posar id a productes enganxats a mà), es para i es torna a fer amb bloqueig.
+  var CAL_BLOQUEIG = { calBloqueig: true };
+  function lectura(m, fn) {
+    try { return fn(true); } catch (e) {
+      if (e === CAL_BLOQUEIG) return m.bloqueja(function () { return fn(false); });
+      throw e;
+    }
+  }
+
+  function productesDe(m, nom, admin, nomesLectura) {
     var prov = proveidors(m), prods = [];
     m.llegir(FULLS.productes).forEach(function (f, i) {
       if (txt(f[1]) !== nom || !txt(f[2])) return;
       var id = txt(f[0]);
       if (!idOk(id)) { // productes enganxats a mà, sense id o amb un id estrany: se'ls en posa un
+        if (nomesLectura) throw CAL_BLOQUEIG;
         id = 'P' + m.uuid().slice(0, 8);
         m.escriure(FULLS.productes, i, 0, id);
       }
@@ -217,9 +228,9 @@ var Nucli = (function () {
     return o;
   }
 
-  function dades(p, m, r) {
+  function dades(p, m, r, nl) {
     var nom = txt(p.paradeta), admin = r === 'admin';
-    var prods = productesDe(m, nom, admin), movs = movimentsDe(m, nom);
+    var prods = productesDe(m, nom, admin, nl), movs = movimentsDe(m, nom);
     var llista = paradetes(m);
     var res = {
       ok: true, admin: admin,
@@ -344,11 +355,11 @@ var Nucli = (function () {
 
   // ---------- Reserves des del web (sense contrasenya) ----------
   // El que es pot reservar: paradetes amb les reserves obertes i els seus productes no amagats.
-  function publica(m) {
+  function publica(m, nl) {
     return {
       ok: true,
       paradetes: paradetes(m).filter(function (x) { return x.reserves; }).map(function (x) {
-        var prods = productesDe(m, x.nom, false).filter(function (p) { return !p.amagat; });
+        var prods = productesDe(m, x.nom, false, nl).filter(function (p) { return !p.amagat; });
         var ex = existencies(prods, movimentsDe(m, x.nom), reservesDe(m, x.nom));
         return {
           nom: x.nom, data: x.data,
@@ -432,7 +443,7 @@ var Nucli = (function () {
     try {
       p = p || {};
       // Les úniques accions sense contrasenya: veure què es pot reservar i fer una reserva
-      if (p.accio === 'publica') return m.bloqueja(function () { return publica(m); });
+      if (p.accio === 'publica') return lectura(m, function (nl) { return publica(m, nl); });
       if (p.accio === 'reserva') return m.bloqueja(function () { return reserva(p, m); });
       var c = config(m);
       if (!c.venda && !c.admin) return { ok: false, error: 'Falten les contrasenyes: posa-les a la pestanya Configuració del full (com a mínim ' + MIN_CLAU + ' caràcters).' };
@@ -440,8 +451,13 @@ var Nucli = (function () {
       if (!r && c.curtes.length) return { ok: false, error: 'La contrasenya ' + c.curtes.join(' i la ') + ' del full té menys de ' + MIN_CLAU + ' caràcters i no val: allarga-la a la pestanya Configuració.' };
       if (!r) return { ok: false, error: 'contrasenya' };
       if (p.accio === 'hola') return { ok: true, admin: r === 'admin', paradetes: paradetes(m) };
-      if (p.accio === 'dades') return m.bloqueja(function () { return dades(p, m, r); });
-      if (p.accio === 'enviar') return m.bloqueja(function () { return enviar(p, m); });
+      if (p.accio === 'dades') return lectura(m, function (nl) { return dades(p, m, r, nl); });
+      if (p.accio === 'enviar') return m.bloqueja(function () {
+        // Amb «ambDades», torna també les dades de la paradeta: l'app s'estalvia una segona crida
+        var res = enviar(p, m);
+        if (p.ambDades && txt(p.paradeta)) res.dades = dades(p, m, r, false);
+        return res;
+      });
       if (ADMIN[p.accio]) {
         if (r !== 'admin') return { ok: false, error: 'Només ho pot fer l\'administració' };
         return m.bloqueja(function () { return ADMIN[p.accio](p, m); });

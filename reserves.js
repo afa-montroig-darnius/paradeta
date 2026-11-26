@@ -30,17 +30,29 @@ async function crida(p) {
   } finally { clearTimeout(t); }
 }
 
+// El que es va veure l'última vegada: surt de seguida mentre es carrega el que hi ha ara
+function desat() { try { return JSON.parse(localStorage.getItem('pa.publica')); } catch (e) { return null; } }
+function posa(paradetes) {
+  R.paradetes = paradetes;
+  if (!R.paradetes.some(x => x.nom === R.par)) R.par = R.paradetes.length ? R.paradetes[0].nom : null;
+  R.estat = 'ok';
+}
+
 async function carrega(silenci) {
-  if (!silenci) { R.estat = 'carregant'; pinta(); }
+  if (!silenci) {
+    const d = desat();
+    if (d && R.estat === 'carregant') { posa(d); R.actualitzant = true; } else R.estat = 'carregant';
+    pinta();
+  }
   try {
     const r = await crida({ accio: 'publica' });
     if (!r.ok) throw r;
-    R.paradetes = r.paradetes;
-    if (!R.paradetes.some(x => x.nom === R.par)) R.par = R.paradetes.length ? R.paradetes[0].nom : null;
-    R.estat = 'ok';
+    posa(r.paradetes);
+    try { localStorage.setItem('pa.publica', JSON.stringify(r.paradetes)); } catch (e) {}
   } catch (e) {
-    if (!silenci) R.estat = 'error';
+    if (!silenci && !R.actualitzant) R.estat = 'error';
   }
+  R.actualitzant = false;
   pinta();
 }
 
@@ -53,6 +65,7 @@ function pinta() {
   let h = `<div class="app"><header><div class="hrow"><img class="logo" src="logo.png" alt="AFA Escola Mont-roig-Darnius"></div></header><main class="pub">`;
   if (DEMO) h = '<div class="demo">Mode demo: les reserves es guarden només en aquest navegador.</div>' + h;
   h += `<h2 class="ptitle">Reserves</h2>`;
+  if (R.actualitzant && !R.resultat) h += `<p class="muted" style="margin:-6px 0 10px">Actualitzant…</p>`;
   if (R.resultat) h += vResultat();
   else if (R.estat === 'carregant') h += `<div class="panel empty"><p class="muted">Carregant…</p></div>`;
   else if (R.estat === 'error') h += `<div class="panel empty"><b>No s'ha pogut carregar</b><p class="muted">Comprova la connexió.</p><div class="btns"><button class="btn sec" onclick="carrega()">Tornar-ho a provar</button></div></div>`;
