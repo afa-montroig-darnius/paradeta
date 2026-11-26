@@ -1,11 +1,12 @@
 // Guarda l'app al mòbil perquè s'obri sense connexió.
 // Cada cop que es publiqui una versió nova, cal canviar VERSIO.
-const VERSIO = 'paradeta-v11';
+const VERSIO = 'paradeta-v12';
 const FITXERS = ['./', './index.html', './styles.css', './app.js', './nucli.js', './demo.js', './config.js',
-  './logo.png', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
+  './reserves.html', './reserves.js', './logo.png', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSIO).then(c => c.addAll(FITXERS)).then(() => self.skipWaiting()));
+  // «reload»: sempre del servidor, no de la memòria del navegador (si no, hi podria quedar un fitxer de la versió d'abans)
+  e.waitUntil(caches.open(VERSIO).then(c => c.addAll(FITXERS.map(f => new Request(f, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
