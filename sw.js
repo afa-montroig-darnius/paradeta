@@ -1,6 +1,6 @@
 // Guarda l'app al mòbil perquè s'obri sense connexió.
 // Cada cop que es publiqui una versió nova, cal canviar VERSIO.
-const VERSIO = 'paradeta-v5';
+const VERSIO = 'paradeta-v6';
 const FITXERS = ['./', './index.html', './styles.css', './app.js', './nucli.js', './demo.js', './config.js',
   './logo.jpg', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
